@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fluxograma Interativo - Engenharia de Petróleo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Fundo mais suave */
+        }
+        .fase-container {
+            min-width: 160px; /* Largura mínima para cada coluna de fase */
+        }
+        .disciplina-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border-width: 2px;
+            border-style: solid;
+        }
+        .disciplina-card:hover {
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        /* Estilos para os estados de destaque */
+        .selected {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        .prerequisito {
+            opacity: 1 !important;
+            border-color: #3b82f6 !important; /* Azul forte */
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+        }
+        .sucessor {
+            opacity: 1 !important;
+            border-color: #10b981 !important; /* Verde forte */
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+        }
+        .fade-out {
+            opacity: 0.3;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="container mx-auto">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Fluxograma Interativo de Engenharia de Petróleo</h1>
+            <p class="text-gray-600 mt-2">Passe o mouse sobre uma disciplina para ver seus pré-requisitos (azul) e sucessores (verde).</p>
+        </header>
+
+        <div id="fluxograma-container" class="flex overflow-x-auto space-x-4 pb-4">
+            <!-- As colunas do fluxograma serão inseridas aqui pelo JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        const disciplinas = [
+            // 1ª Fase
+            { id: 1, fase: 1, nome: 'Cálculo Dif Int I', area: 'matematica' },
+            { id: 2, fase: 1, nome: 'Introdução Eng Petróleo', area: 'especifica' },
+            { id: 3, fase: 1, nome: 'Geometria Analítica', area: 'matematica' },
+            { id: 4, fase: 1, nome: 'Química Geral', area: 'quimica' },
+            { id: 5, fase: 1, nome: 'Desenho Técnico', area: 'basica' },
+            { id: 6, fase: 1, nome: 'Química Exper I', area: 'quimica' },
+            { id: 7, fase: 1, nome: 'Ciência dos Materiais', area: 'basica' },
+            { id: 8, fase: 1, nome: 'Física Exper I', area: 'fisica' },
+
+            // 2ª Fase
+            { id: 9, fase: 2, nome: 'Cálculo Dif Int II', area: 'matematica', prerequisitos: [1] },
+            { id: 10, fase: 2, nome: 'Física I', area: 'fisica', prerequisitos: [1, 2] },
+            { id: 11, fase: 2, nome: 'Álgebra Linear', area: 'matematica', prerequisitos: [3] },
+            { id: 12, fase: 2, nome: 'Química Orgânica I', area: 'quimica', prerequisitos: [4] },
+            { id: 13, fase: 2, nome: 'Estatística Descritiva', area: 'basica' },
+            { id: 14, fase: 2, nome: 'Química Exper II', area: 'quimica', prerequisitos: [4] },
+            { id: 15, fase: 2, nome: 'Física Exper II', area: 'fisica', prerequisitos: [8] },
+
+            // 3ª Fase
+            { id: 16, fase: 3, nome: 'Cálculo Dif Int III', area: 'matematica', prerequisitos: [9] },
+            { id: 17, fase: 3, nome: 'Física II', area: 'fisica', prerequisitos: [9, 10] },
+            { id: 18, fase: 3, nome: 'Geologia Geral', area: 'geociencias' },
+            { id: 19, fase: 3, nome: 'Química Orgânica II', area: 'quimica', prerequisitos: [12] },
+            { id: 20, fase: 3, nome: 'Linguagem Progr I', area: 'basica' },
+            { id: 21, fase: 3, nome: 'Estática', area: 'basica', prerequisitos: [7] },
+            { id: 22, fase: 3, nome: 'Física Exper III', area: 'fisica', prerequisitos: [15] },
+
+            // 4ª Fase
+            { id: 23, fase: 4, nome: 'Equações Diferenciais', area: 'matematica', prerequisitos: [16] },
+            { id: 24, fase: 4, nome: 'Física III', area: 'fisica', prerequisitos: [16, 17] },
+            { id: 25, fase: 4, nome: 'Geologia do Petróleo', area: 'geociencias', prerequisitos: [18] },
+            { id: 26, fase: 4, nome: 'Introd Físico Química', area: 'quimica', prerequisitos: [19] },
+            { id: 27, fase: 4, nome: 'Métodos Numéricos I', area: 'matematica', prerequisitos: [20] },
+            { id: 28, fase: 4, nome: 'Resist dos Materiais', area: 'basica', prerequisitos: [21] },
+            { id: 29, fase: 4, nome: 'Gestão e Liderança', area: 'gestao' },
+
+            // 5ª Fase
+            { id: 30, fase: 5, nome: 'Mecânica Fluidos', area: 'especifica', prerequisitos: [23, 24] },
+            { id: 31, fase: 5, nome: 'Termo Aplic Petróleo', area: 'especifica', prerequisitos: [24] },
+            { id: 32, fase: 5, nome: 'Geofísica', area: 'geociencias', prerequisitos: [25] },
+            { id: 33, fase: 5, nome: 'Instr Med Petróleo', area: 'especifica', prerequisitos: [26] },
+            { id: 34, fase: 5, nome: 'Métodos Numéricos II', area: 'matematica', prerequisitos: [27] },
+            { id: 35, fase: 5, nome: 'Geomecânica', area: 'geociencias', prerequisitos: [28] },
+            { id: 36, fase: 5, nome: 'Fund Energias Ren', area: 'complementar' },
+
+            // 6ª Fase
+            { id: 37, fase: 6, nome: 'Máquinas de Fluxo', area: 'especifica', prerequisitos: [30] },
+            { id: 38, fase: 6, nome: 'Transf de Calor', area: 'especifica', prerequisitos: [30] },
+            { id: 39, fase: 6, nome: 'Estudo Geol. de Campo', area: 'geociencias', prerequisitos: [32] },
+            { id: 40, fase: 6, nome: 'Engenharia Reserv I', area: 'reservatorios', prerequisitos: [31, 32] },
+            { id: 41, fase: 6, nome: 'Escoamento Multifásico', area: 'especifica', prerequisitos: [34] },
+            { id: 42, fase: 6, nome: 'Engenharia de Poço I', area: 'poco', prerequisitos: [35] },
+            { id: 43, fase: 6, nome: 'Engenharia Submarina', area: 'especifica' },
+
+            // 7ª Fase
+            { id: 44, fase: 7, nome: 'Gestão de Projetos', area: 'gestao' },
+            { id: 45, fase: 7, nome: 'Transf de Massa', area: 'especifica', prerequisitos: [38] },
+            { id: 46, fase: 7, nome: 'Sist Contr Automação', area: 'basica' },
+            { id: 47, fase: 7, nome: 'Engenharia Reserv II', area: 'reservatorios', prerequisitos: [40] },
+            { id: 48, fase: 7, nome: 'Métodos de Elevação', area: 'especifica', prerequisitos: [41] },
+            { id: 49, fase: 7, nome: 'Engenharia de Poço II', area: 'poco', prerequisitos: [42] },
+            { id: 50, fase: 7, nome: 'Projeto Integrado I', area: 'projeto' },
+            { id: 51, fase: 7, nome: 'Economia Petróleo', area: 'gestao' },
+
+            // 8ª Fase
+            { id: 52, fase: 8, nome: 'Testes de Poços', area: 'poco', prerequisitos: [44] },
+            { id: 53, fase: 8, nome: 'Processam Prim Petr', area: 'especifica', prerequisitos: [45] },
+            { id: 54, fase: 8, nome: 'Logística Integrada', area: 'gestao' },
+            { id: 55, fase: 8, nome: 'Simulação Reservatórios', area: 'reservatorios', prerequisitos: [47] },
+            { id: 56, fase: 8, nome: 'Garantia de Escoamento', area: 'especifica', prerequisitos: [48] },
+            { id: 57, fase: 8, nome: 'Engenharia de Poço III', area: 'poco', prerequisitos: [49] },
+            { id: 58, fase: 8, nome: 'Projeto Integrado II', area: 'projeto', prerequisitos: [50] },
+            { id: 59, fase: 8, nome: 'Impactos Ambientais', area: 'complementar' },
+
+            // 9ª Fase
+            { id: 60, fase: 9, nome: 'Fund Recup Avançada', area: 'reservatorios', prerequisitos: [52] },
+            { id: 61, fase: 9, nome: 'Process Oleo e Gás', area: 'especifica', prerequisitos: [53] },
+            { id: 62, fase: 9, nome: 'Saúde Seg Trabalho', area: 'complementar' },
+            { id: 63, fase: 9, nome: 'Aval Proj Oleo e Gás', area: 'reservatorios', prerequisitos: [55] },
+            { id: 64, fase: 9, nome: 'Gerenc Riscos Amb', area: 'gestao', prerequisitos: [59] },
+            { id: 65, fase: 9, nome: 'Projeto Integrado III', area: 'projeto', prerequisitos: [58] },
+
+            // 10ª Fase
+            { id: 66, fase: 10, nome: 'Estágio Superv', area: 'final', prerequisitos: [60] },
+            { id: 67, fase: 10, nome: 'Proj Concl Curso', area: 'final', prerequisitos: [61] },
+            { id: 68, fase: 10, nome: 'OPTATIVA', area: 'optativa' },
+            { id: 69, fase: 10, nome: 'OPTATIVA', area: 'optativa' },
+            { id: 70, fase: 10, nome: 'OPTATIVA', area: 'optativa' },
+            { id: 71, fase: 10, nome: 'OPTATIVA', area: 'optativa' },
+        ];
+
+        const coresArea = {
+            matematica: 'bg-blue-100 border-blue-300 text-blue-800',
+            fisica: 'bg-indigo-100 border-indigo-300 text-indigo-800',
+            quimica: 'bg-purple-100 border-purple-300 text-purple-800',
+            geociencias: 'bg-yellow-100 border-yellow-400 text-yellow-800',
+            basica: 'bg-gray-100 border-gray-300 text-gray-800',
+            especifica: 'bg-red-100 border-red-300 text-red-800',
+            reservatorios: 'bg-green-100 border-green-300 text-green-800',
+            poco: 'bg-teal-100 border-teal-300 text-teal-800',
+            gestao: 'bg-pink-100 border-pink-300 text-pink-800',
+            projeto: 'bg-orange-100 border-orange-300 text-orange-800',
+            complementar: 'bg-cyan-100 border-cyan-300 text-cyan-800',
+            optativa: 'bg-gray-200 border-gray-400 text-gray-700',
+            final: 'bg-emerald-200 border-emerald-400 text-emerald-800 font-bold',
+        };
+
+        const container = document.getElementById('fluxograma-container');
+
+        // Agrupa disciplinas por fase
+        const fases = disciplinas.reduce((acc, disc) => {
+            if (!acc[disc.fase]) {
+                acc[disc.fase] = [];
+            }
+            acc[disc.fase].push(disc);
+            return acc;
+        }, {});
+
+        // Cria as colunas e os cards
+        Object.keys(fases).forEach(faseNum => {
+            const faseDiv = document.createElement('div');
+            faseDiv.className = 'fase-container flex-shrink-0';
+            
+            const faseTitle = document.createElement('h2');
+            faseTitle.className = 'text-xl font-semibold text-center mb-4 text-gray-700';
+            faseTitle.textContent = `${faseNum}ª Fase`;
+            faseDiv.appendChild(faseTitle);
+
+            const disciplinasDiv = document.createElement('div');
+            disciplinasDiv.className = 'space-y-3';
+            fases[faseNum].forEach(disc => {
+                const card = document.createElement('div');
+                card.className = `disciplina-card p-3 rounded-lg shadow-md text-center text-sm font-medium ${coresArea[disc.area]}`;
+                card.textContent = disc.nome;
+                card.dataset.id = disc.id;
+                disciplinasDiv.appendChild(card);
+            });
+            faseDiv.appendChild(disciplinasDiv);
+            container.appendChild(faseDiv);
+        });
+
+        const allCards = document.querySelectorAll('.disciplina-card');
+
+        // Função para encontrar todos os pré-requisitos de uma disciplina, recursivamente
+        function getTodosPrerequisitos(disciplinaId, allDisciplinas) {
+            const disciplina = allDisciplinas.find(d => d.id === disciplinaId);
+            if (!disciplina || !disciplina.prerequisitos) {
+                return [];
+            }
+            let prereqs = [...disciplina.prerequisitos];
+            disciplina.prerequisitos.forEach(pId => {
+                prereqs = [...prereqs, ...getTodosPrerequisitos(pId, allDisciplinas)];
+            });
+            return [...new Set(prereqs)]; // Remove duplicatas
+        }
+
+        // Função para encontrar todos os sucessores de uma disciplina
+        function getTodosSucessores(disciplinaId, allDisciplinas) {
+            let sucessores = [];
+            allDisciplinas.forEach(d => {
+                if (d.prerequisitos && d.prerequisitos.includes(disciplinaId)) {
+                    sucessores.push(d.id);
+                    sucessores = [...sucessores, ...getTodosSucessores(d.id, allDisciplinas)];
+                }
+            });
+            return [...new Set(sucessores)];
+        }
+
+        allCards.forEach(card => {
+            card.addEventListener('mouseover', (e) => {
+                const currentId = parseInt(e.target.dataset.id);
+                
+                const prerequisitosIds = getTodosPrerequisitos(currentId, disciplinas);
+                const sucessoresIds = getTodosSucessores(currentId, disciplinas);
+
+                allCards.forEach(c => {
+                    const cardId = parseInt(c.dataset.id);
+                    c.classList.add('fade-out');
+
+                    if (cardId === currentId) {
+                        c.classList.remove('fade-out');
+                        c.classList.add('selected');
+                    }
+                    if (prerequisitosIds.includes(cardId)) {
+                        c.classList.remove('fade-out');
+                        c.classList.add('prerequisito');
+                    }
+                    if (sucessoresIds.includes(cardId)) {
+                        c.classList.remove('fade-out');
+                        c.classList.add('sucessor');
+                    }
+                });
+            });
+
+            card.addEventListener('mouseout', () => {
+                allCards.forEach(c => {
+                    c.classList.remove('fade-out', 'selected', 'prerequisito', 'sucessor');
+                });
+            });
+        });
+
+    </script>
+</body>
+</html>
